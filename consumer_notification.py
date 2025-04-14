@@ -6,13 +6,18 @@ from rabbitmq_config import RABBITMQ_HOST, EXCHANGE_NAME
 def send_notification(ch, method, properties, body):
     data = json.loads(body)
     order_id = data["order_id"]
+    user_name = data["user_name"]# get and user username
     
     if method.routing_key == "order-created":
-        message = f"Order {order_id} has been placed successfully. Notification sent to user."
+        message = f"Order {order_id} has been placed successfully. Notification sent to user: {user_name}."
     elif method.routing_key == "payment-success":
-        message = f"Payment for Order {order_id} was successful. Notification sent to user."
+        message = f"Payment for Order {order_id} was successful. Notification sent to user: {user_name}."
     elif method.routing_key == "payment-denied":
-        message = f"Payment for Order {order_id} was denied. Notification sent to user."
+        message = f"Payment for Order {order_id} was denied. Notification sent to user: {user_name}." 
+    elif method.routing_key == "order-fulfilled":
+        message = f"Fullfillment: [{user_name}] - {order_id} has been fulfilled."#filled
+    elif method.routing_key == "order-shipped":
+        message = f"Shipping: [{user_name}] - {order_id} has been shipped."#shipped
     else:
         message = "Unknown notification event received."
 
@@ -26,6 +31,10 @@ def start_notification_consumer():
     channel.queue_bind(exchange=EXCHANGE_NAME, queue="notification_queue", routing_key="order-created")
     channel.queue_bind(exchange=EXCHANGE_NAME, queue="notification_queue", routing_key="payment-success")
     channel.queue_bind(exchange=EXCHANGE_NAME, queue="notification_queue", routing_key="payment-denied")
+    channel.queue_bind(exchange=EXCHANGE_NAME, queue="notification_queue", routing_key="order-fulfilled")# added fulfillment bind
+    channel.queue_bind(exchange=EXCHANGE_NAME, queue="notification_queue", routing_key="order-shipped") # added shipping bind
+
+
 
     channel.basic_consume(queue="notification_queue", on_message_callback=send_notification, auto_ack=True)
 

@@ -8,7 +8,7 @@ def process_payment(ch, method, properties, body):
     data = json.loads(body)
     order_id = data["order_id"]
 
-    payment_success = random.choice([True, False])
+    payment_success = False #random.choice([True, False])
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
     channel = connection.channel()
